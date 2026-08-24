@@ -5,7 +5,7 @@ import { MediaManager } from "@/components/MediaManager";
 import { adminApi, type ProductPayload } from "@/lib/adminApi";
 import type { MediaAsset, Product } from "@/lib/types";
 
-const CONTAINER_TYPES = ["Box Standard", "Reefer", "Uso ufficio"] as const;
+const CONTAINER_TYPES = ["Dry Van / General Purpose", "Reefer", "Uso ufficio"] as const;
 const CONTAINER_SIZES = ["20'", "40'", "40HC"] as const;
 
 type ContainerType = (typeof CONTAINER_TYPES)[number];
@@ -13,7 +13,7 @@ type ContainerSize = (typeof CONTAINER_SIZES)[number];
 type TechnicalPreset = Pick<ProductPayload, "lengthM" | "widthM" | "heightM" | "volumeM3">;
 
 const CONTAINER_PRESETS: Record<ContainerType, Record<ContainerSize, TechnicalPreset>> = {
-  "Box Standard": {
+  "Dry Van / General Purpose": {
     "20'": { lengthM: 6.06, widthM: 2.44, heightM: 2.59, volumeM3: 33.2 },
     "40'": { lengthM: 12.19, widthM: 2.44, heightM: 2.59, volumeM3: 67.7 },
     "40HC": { lengthM: 12.19, widthM: 2.44, heightM: 2.9, volumeM3: 76.4 }
@@ -34,7 +34,7 @@ function normalizeContainerType(value: string): ContainerType {
   const normalized = value.toLowerCase();
   if (normalized.includes("reefer")) return "Reefer";
   if (normalized.includes("ufficio") || normalized.includes("office")) return "Uso ufficio";
-  return "Box Standard";
+  return "Dry Van / General Purpose";
 }
 
 function normalizeContainerSize(value: string): ContainerSize {
@@ -52,7 +52,7 @@ const emptyProduct: ProductPayload = applyTechnicalPreset({
   slug: "",
   title: "",
   size: "20'",
-  type: "Box Standard",
+  type: "Dry Van / General Purpose",
   condition: "Usato · Ottime condizioni strutturali",
   location: "Salerno",
   price: null,
@@ -65,7 +65,7 @@ const emptyProduct: ProductPayload = applyTechnicalPreset({
   heightM: null,
   volumeM3: null,
   isPublished: false
-}, "Box Standard", "20'");
+}, "Dry Van / General Purpose", "20'");
 
 function slugify(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
