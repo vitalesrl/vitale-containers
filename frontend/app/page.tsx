@@ -4,9 +4,10 @@ import { ProductCard } from "@/components/ProductCard";
 import { getProducts } from "@/lib/api";
 
 const dimensions = [
-  { name: "20' Box Standard", length: "6,06 m", width: "2,44 m", height: "2,59 m", volume: "≈ 33 m³" },
-  { name: "40' Box Standard", length: "12,19 m", width: "2,44 m", height: "2,59 m", volume: "≈ 67 m³" },
-  { name: "40' High Cube", length: "12,19 m", width: "2,44 m", height: "2,90 m", volume: "≈ 76 m³" }
+  { name: "20' Dry Van / General Purpose", length: "6,06 m", width: "2,44 m", height: "2,59 m", volume: "≈ 33 m³" },
+  { name: "40' Dry Van / General Purpose", length: "12,19 m", width: "2,44 m", height: "2,59 m", volume: "≈ 67 m³" },
+  { name: "40' High Cube", length: "12,19 m", width: "2,44 m", height: "2,90 m", volume: "≈ 76 m³" },
+  { name: "45' High Cube Pallet Wide", length: "12,192 m", width: "2,438 m", height: "2,896 m", volume: "—" }
 ];
 
 export default async function HomePage() {
@@ -63,7 +64,7 @@ export default async function HomePage() {
 
       <section className="section" id="caratteristiche">
         <div className="section-heading">
-          <div><div className="eyebrow">DIMENSIONI</div><h2>Box Standard e High Cube</h2></div>
+          <div><div className="eyebrow">DIMENSIONI</div><h2>Dry Van, High Cube e Pallet Wide</h2></div>
         </div>
         <div className="spec-grid">
           {dimensions.map((item) => (
