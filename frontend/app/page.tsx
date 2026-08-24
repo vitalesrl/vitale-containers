@@ -32,8 +32,8 @@ export default async function HomePage() {
         </div>
         <aside className="hero-panel">
           <div className="hero-panel-label">DISPONIBILI</div>
-          <strong>20&apos; · 40&apos; · HC</strong>
-          <p>Box Standard, High Cube, Reefer refrigerati e container allestiti uso ufficio.</p>
+          <strong>20&apos; · 40&apos; · 45&apos; · HC</strong>
+          <p>Dry Van/General Purpose, High Cube, High Cube Pallet Wide, Reefer refrigerati e container allestiti uso ufficio.</p>
           <div className="hero-panel-line"></div>
           <span>Ritiro a Salerno o trasporto in tutta Italia.</span>
         </aside>
