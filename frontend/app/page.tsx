@@ -163,7 +163,7 @@ export default async function HomePage() {
             <span>SEDE OPERATIVA</span>
             <h3>Salerno</h3>
             <p>Via Dei Carrari, 35/A<br />84133 Salerno (SA)</p>
-            <a href="tel:089381688">Tel. 089 381688</a>
+            <a href="tel:089235288">Tel. 089 235288</a>
           </article>
         </div>
       </section>

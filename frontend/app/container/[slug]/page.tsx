@@ -46,7 +46,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.volumeM3 && <div><dt>Volume</dt><dd>circa {product.volumeM3.toLocaleString("it-IT")} m³</dd></div>}
           </dl>
           <div className="hero-actions">
-            <a className="button button-accent" href="tel:089381688">Chiama 089 381688</a>
+            <a className="button button-accent" href="tel:089381688">Chiama +39 350 1921650</a>
             <a className="button button-outline" href="/#contatti">Richiedi informazioni</a>
             <Link className="button button-outline" href="/container">Torna al catalogo</Link>
           </div>
