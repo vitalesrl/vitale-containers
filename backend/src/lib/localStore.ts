@@ -5,7 +5,23 @@ import { fileURLToPath } from "node:url";
 import { demoProducts } from "../data/demo.js";
 import type { MediaAsset } from "./media.js";
 
-export type LocalProduct = (typeof demoProducts)[number] & {
+export type LocalProduct = {
+  id: string;
+  slug: string;
+  title: string;
+  size: string;
+  type: string;
+  condition: string;
+  location: string;
+  price: number | null;
+  vatIncluded: boolean;
+  availability: number | null;
+  description: string;
+  imageUrl: string | null;
+  lengthM: number | null;
+  widthM: number | null;
+  heightM: number | null;
+  volumeM3: number | null;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
