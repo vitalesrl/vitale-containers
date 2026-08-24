@@ -1,4 +1,5 @@
 import type { Lead, LeadStatus, MediaAsset, Product } from "./types";
+import { getSupabaseBrowserClient } from "./supabaseClient";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4001";
 
@@ -7,6 +8,7 @@ export type MediaEntityType = "product";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
+  const { data: { session } } = await getSupabaseBrowserClient().auth.getSession();
 
   // Fastify rifiuta con HTTP 400 una richiesta dichiarata application/json
   // quando il body è assente (caso tipico dei DELETE). Aggiungiamo quindi
@@ -19,6 +21,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers.set("Content-Type", "application/json");
   }
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
+  if (session?.access_token) headers.set("Authorization", `Bearer ${session.access_token}`);
 
   try {
     response = await fetch(`${API_URL}${path}`, {
@@ -43,10 +46,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 async function uploadMedia(type: MediaEntityType, id: string, files: File[]) {
   const body = new FormData();
+  const { data: { session } } = await getSupabaseBrowserClient().auth.getSession();
   files.forEach((file) => body.append("files", file));
   let response: Response;
   try {
-    response = await fetch(`${API_URL}/api/admin/media/${type}/${id}`, { method: "POST", body });
+    response = await fetch(`${API_URL}/api/admin/media/${type}/${id}`, { method: "POST", body, headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined });
   } catch {
     throw new Error(`Backend non raggiungibile su ${API_URL}. Verifica che il server sulla porta 4001 sia attivo.`);
   }

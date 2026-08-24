@@ -10,6 +10,7 @@ import { adminRoutes } from "./routes/admin.js";
 import { containerRoutes } from "./routes/containers.js";
 import { mediaRoutes } from "./routes/media.js";
 import { localUploadsRoot } from "./lib/media.js";
+import { requireAdminAuth } from "./lib/auth.js";
 
 const app = Fastify({ logger: true });
 const port = Number(process.env.PORT || 4001);
@@ -37,6 +38,12 @@ await app.register(fastifyStatic, {
   root: localUploadsRoot,
   prefix: "/uploads/",
   decorateReply: false
+});
+
+app.addHook("onRequest", async (request, reply) => {
+  if (request.url.startsWith("/api/admin/")) {
+    await requireAdminAuth(request, reply);
+  }
 });
 
 app.get("/health", async () => ({

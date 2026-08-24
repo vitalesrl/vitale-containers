@@ -120,3 +120,38 @@ Il limite 32-bit riguarda soltanto lo sviluppo locale. Build e deploy Vercel non
 - Le immagini caricate nella galleria non vengono più risalvate come URL legacy del prodotto.
 - Gli URL di media gestiti rimasti nel vecchio campo `imageUrl` vengono ignorati se non esiste più il media asset, evitando immagini rotte in home e dettaglio.
 - Eliminando una foto, il backend ripulisce anche un eventuale riferimento legacy coincidente.
+
+
+## V4.5 — Production / Supabase Auth
+
+La V4.5 protegge tutta l'area gestionale con Supabase Auth.
+
+- `/admin/login` usa email/password Supabase.
+- tutte le chiamate `/api/admin/*` inviano il Bearer token della sessione;
+- il backend valida il token con Supabase prima di eseguire le API amministrative;
+- la `SUPABASE_SERVICE_ROLE_KEY` resta esclusivamente nel backend Render;
+- il frontend Vercel usa soltanto `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`;
+- le API pubbliche della vetrina restano accessibili senza login.
+
+### Variabili Render
+
+```env
+PORT=4001
+FRONTEND_ORIGIN=https://TUO-DOMINIO-VERCEL
+PUBLIC_API_URL=https://TUO-BACKEND.onrender.com
+SUPABASE_URL=https://TUO-PROGETTO.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...
+SUPABASE_STORAGE_BUCKET=container-images
+```
+
+### Variabili Vercel
+
+```env
+NEXT_PUBLIC_API_URL=https://TUO-BACKEND.onrender.com
+NEXT_PUBLIC_SUPABASE_URL=https://TUO-PROGETTO.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+### Primo accesso
+
+Crea l'utente gestionale in Supabase Dashboard → Authentication → Users. Non serve una nuova esecuzione di `schema.sql` per attivare il login V4.5.
