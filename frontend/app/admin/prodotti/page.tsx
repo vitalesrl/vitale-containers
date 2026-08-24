@@ -29,29 +29,28 @@ const AVAILABLE_SIZES: Record<ContainerType, readonly ContainerSize[]> = {
 
 const CONTAINER_PRESETS: Record<ContainerType, Partial<Record<ContainerSize, TechnicalPreset>>> = {
   "Dry Van / General Purpose": {
-    "20'": { lengthM: 6.06, widthM: 2.44, heightM: 2.59, volumeM3: 33.2 },
-    "40'": { lengthM: 12.19, widthM: 2.44, heightM: 2.59, volumeM3: 67.7 },
-    "40HC": { lengthM: 12.19, widthM: 2.44, heightM: 2.9, volumeM3: 76.4 }
+    "20'": { lengthM: 6.058, widthM: 2.438, heightM: 2.591, volumeM3: 33.2 },
+    "40'": { lengthM: 12.192, widthM: 2.438, heightM: 2.591, volumeM3: 67.7 },
+    "40HC": { lengthM: 12.192, widthM: 2.438, heightM: 2.896, volumeM3: 76.4 }
   },
   Reefer: {
-    "20'": { lengthM: 6.06, widthM: 2.44, heightM: 2.59, volumeM3: 28.4 },
-    "40'": { lengthM: 12.19, widthM: 2.44, heightM: 2.59, volumeM3: 59.3 },
-    "40HC": { lengthM: 12.19, widthM: 2.44, heightM: 2.9, volumeM3: 67.3 }
+    "20'": { lengthM: 6.058, widthM: 2.438, heightM: 2.591, volumeM3: 27.4 },
+    "40'": { lengthM: 12.192, widthM: 2.438, heightM: 2.591, volumeM3: 59.3 },
+    "40HC": { lengthM: 12.192, widthM: 2.438, heightM: 2.896, volumeM3: 67.3 }
   },
   "Uso ufficio": {
-    "20'": { lengthM: 6.06, widthM: 2.44, heightM: 2.59, volumeM3: 33.2 },
-    "40'": { lengthM: 12.19, widthM: 2.44, heightM: 2.59, volumeM3: 67.7 },
-    "40HC": { lengthM: 12.19, widthM: 2.44, heightM: 2.9, volumeM3: 76.4 }
+    "20'": { lengthM: 6.058, widthM: 2.438, heightM: 2.591, volumeM3: 33.2 },
+    "40'": { lengthM: 12.192, widthM: 2.438, heightM: 2.591, volumeM3: 67.7 },
+    "40HC": { lengthM: 12.192, widthM: 2.438, heightM: 2.896, volumeM3: 76.4 }
   },
   "Open Top": {
-    "20'": { lengthM: 6.058, widthM: 2.438, heightM: 2.591, volumeM3: null },
-    "40'": { lengthM: 12.192, widthM: 2.438, heightM: 2.591, volumeM3: null }
+    "20'": { lengthM: 6.058, widthM: 2.438, heightM: 2.591, volumeM3: 32.5 },
+    "40'": { lengthM: 12.192, widthM: 2.438, heightM: 2.591, volumeM3: 65.0 }
   },
   "High Cube Pallet Wide": {
-    "45HC": { lengthM: 12.192, widthM: 2.438, heightM: 2.896, volumeM3: null }
+    "45HC": { lengthM: 13.716, widthM: 2.450, heightM: 2.896, volumeM3: 89.0 }
   }
 };
-
 function normalizeContainerType(value: string): ContainerType {
   const normalized = value.toLowerCase();
   if (normalized.includes("open top") || normalized.includes("opentop")) return "Open Top";
