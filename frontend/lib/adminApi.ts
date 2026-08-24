@@ -1,10 +1,11 @@
-import type { Lead, LeadStatus, MediaAsset, Product } from "./types";
+import type { ContainerUnit, Lead, LeadStatus, MediaAsset, Product } from "./types";
 import { getSupabaseBrowserClient } from "./supabaseClient";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4001";
 
 export type ProductPayload = Omit<Product, "id" | "images" | "createdAt" | "updatedAt">;
-export type MediaEntityType = "product";
+export type ContainerPayload = Omit<ContainerUnit, "id" | "productTitle" | "images" | "createdAt" | "updatedAt">;
+export type MediaEntityType = "product" | "container";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
@@ -68,6 +69,12 @@ export const adminApi = {
     create: (payload: ProductPayload) => request<Product>("/api/admin/products", { method: "POST", body: JSON.stringify(payload) }),
     update: (id: string, payload: ProductPayload) => request<Product>(`/api/admin/products/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
     remove: (id: string) => request<void>(`/api/admin/products/${id}`, { method: "DELETE" })
+  },
+  containers: {
+    list: () => request<ContainerUnit[]>("/api/admin/containers"),
+    create: (payload: ContainerPayload) => request<ContainerUnit>("/api/admin/containers", { method: "POST", body: JSON.stringify(payload) }),
+    update: (id: string, payload: ContainerPayload) => request<ContainerUnit>(`/api/admin/containers/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+    remove: (id: string) => request<void>(`/api/admin/containers/${id}`, { method: "DELETE" })
   },
   leads: {
     list: () => request<Lead[]>("/api/admin/leads"),
