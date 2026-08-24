@@ -5,7 +5,50 @@ import { MediaManager } from "@/components/MediaManager";
 import { adminApi, type ProductPayload } from "@/lib/adminApi";
 import type { MediaAsset, Product } from "@/lib/types";
 
-const emptyProduct: ProductPayload = {
+const CONTAINER_TYPES = ["Box Standard", "Reefer", "Uso ufficio"] as const;
+const CONTAINER_SIZES = ["20'", "40'", "40HC"] as const;
+
+type ContainerType = (typeof CONTAINER_TYPES)[number];
+type ContainerSize = (typeof CONTAINER_SIZES)[number];
+type TechnicalPreset = Pick<ProductPayload, "lengthM" | "widthM" | "heightM" | "volumeM3">;
+
+const CONTAINER_PRESETS: Record<ContainerType, Record<ContainerSize, TechnicalPreset>> = {
+  "Box Standard": {
+    "20'": { lengthM: 6.06, widthM: 2.44, heightM: 2.59, volumeM3: 33.2 },
+    "40'": { lengthM: 12.19, widthM: 2.44, heightM: 2.59, volumeM3: 67.7 },
+    "40HC": { lengthM: 12.19, widthM: 2.44, heightM: 2.9, volumeM3: 76.4 }
+  },
+  Reefer: {
+    "20'": { lengthM: 6.06, widthM: 2.44, heightM: 2.59, volumeM3: 28.4 },
+    "40'": { lengthM: 12.19, widthM: 2.44, heightM: 2.59, volumeM3: 59.3 },
+    "40HC": { lengthM: 12.19, widthM: 2.44, heightM: 2.9, volumeM3: 67.3 }
+  },
+  "Uso ufficio": {
+    "20'": { lengthM: 6.06, widthM: 2.44, heightM: 2.59, volumeM3: 33.2 },
+    "40'": { lengthM: 12.19, widthM: 2.44, heightM: 2.59, volumeM3: 67.7 },
+    "40HC": { lengthM: 12.19, widthM: 2.44, heightM: 2.9, volumeM3: 76.4 }
+  }
+};
+
+function normalizeContainerType(value: string): ContainerType {
+  const normalized = value.toLowerCase();
+  if (normalized.includes("reefer")) return "Reefer";
+  if (normalized.includes("ufficio") || normalized.includes("office")) return "Uso ufficio";
+  return "Box Standard";
+}
+
+function normalizeContainerSize(value: string): ContainerSize {
+  const normalized = value.toLowerCase().replace(/\s+/g, "");
+  if (normalized.includes("hc") || normalized.includes("highcube")) return "40HC";
+  if (normalized.startsWith("40")) return "40'";
+  return "20'";
+}
+
+function applyTechnicalPreset(product: ProductPayload, type: ContainerType, size: ContainerSize): ProductPayload {
+  return { ...product, type, size, ...CONTAINER_PRESETS[type][size] };
+}
+
+const emptyProduct: ProductPayload = applyTechnicalPreset({
   slug: "",
   title: "",
   size: "20'",
@@ -22,7 +65,7 @@ const emptyProduct: ProductPayload = {
   heightM: null,
   volumeM3: null,
   isPublished: false
-};
+}, "Box Standard", "20'");
 
 function slugify(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -70,17 +113,29 @@ export default function AdminProductsPage() {
   }
 
   function edit(product: Product) {
+    const type = normalizeContainerType(product.type);
+    const size = normalizeContainerSize(product.size);
     setEditingId(product.id);
     setEditingImages(product.images ?? []);
-    setForm({
-      slug: product.slug, title: product.title, size: product.size, type: product.type, condition: product.condition,
+    setForm(applyTechnicalPreset({
+      slug: product.slug, title: product.title, size, type, condition: product.condition,
       location: product.location, price: product.price, vatIncluded: product.vatIncluded, availability: product.availability,
       description: product.description, imageUrl: product.externalImageUrl ?? null, lengthM: product.lengthM ?? null,
       widthM: product.widthM ?? null, heightM: product.heightM ?? null, volumeM3: product.volumeM3 ?? null,
       isPublished: Boolean(product.isPublished)
-    });
+    }, type, size));
     setEditorOpen(true);
     setError(""); setNotice("");
+  }
+
+  function changeType(value: string) {
+    const type = value as ContainerType;
+    setForm((current) => applyTechnicalPreset(current, type, normalizeContainerSize(current.size)));
+  }
+
+  function changeSize(value: string) {
+    const size = value as ContainerSize;
+    setForm((current) => applyTechnicalPreset(current, normalizeContainerType(current.type), size));
   }
 
   async function save(event: React.FormEvent) {
@@ -134,16 +189,16 @@ export default function AdminProductsPage() {
             <div className="form-grid">
               <label className="span-2">Titolo<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value, slug: editingId ? form.slug : slugify(e.target.value) })} placeholder="Container 40' High Cube" /></label>
               <label>Slug<input required value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })} /></label>
-              <label>Dimensione<input required value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} placeholder="40' HC" /></label>
-              <label>Tipologia<input required value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="High Cube" /></label>
+              <label>Tipologia<select required value={normalizeContainerType(form.type)} onChange={(e) => changeType(e.target.value)}>{CONTAINER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
+              <label>Dimensione<select required value={normalizeContainerSize(form.size)} onChange={(e) => changeSize(e.target.value)}>{CONTAINER_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}</select></label>
               <label>Condizione<input required value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })} /></label>
               <label>Località<input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></label>
               <label>Prezzo €<input type="number" step="0.01" min="0" value={form.price ?? ""} onChange={(e) => setForm({ ...form, price: num(e.target.value) })} placeholder="Vuoto = su richiesta" /></label>
               <label>Disponibilità<input type="number" min="0" value={form.availability ?? ""} onChange={(e) => setForm({ ...form, availability: num(e.target.value) })} placeholder="Vuoto = da confermare" /></label>
-              <label>Lunghezza m<input type="number" step="0.01" value={form.lengthM ?? ""} onChange={(e) => setForm({ ...form, lengthM: num(e.target.value) })} /></label>
-              <label>Larghezza m<input type="number" step="0.01" value={form.widthM ?? ""} onChange={(e) => setForm({ ...form, widthM: num(e.target.value) })} /></label>
-              <label>Altezza m<input type="number" step="0.01" value={form.heightM ?? ""} onChange={(e) => setForm({ ...form, heightM: num(e.target.value) })} /></label>
-              <label>Volume m³<input type="number" step="0.01" value={form.volumeM3 ?? ""} onChange={(e) => setForm({ ...form, volumeM3: num(e.target.value) })} /></label>
+              <label>Lunghezza m<input type="number" value={form.lengthM ?? ""} readOnly title="Compilata automaticamente in base a tipologia e dimensione" /></label>
+              <label>Larghezza m<input type="number" value={form.widthM ?? ""} readOnly title="Compilata automaticamente in base a tipologia e dimensione" /></label>
+              <label>Altezza m<input type="number" value={form.heightM ?? ""} readOnly title="Compilata automaticamente in base a tipologia e dimensione" /></label>
+              <label>Volume m³<input type="number" value={form.volumeM3 ?? ""} readOnly title="Compilato automaticamente in base a tipologia e dimensione" /></label>
               <label className="span-2">URL immagine esterna / legacy (opzionale)<input value={form.imageUrl ?? ""} onChange={(e) => setForm({ ...form, imageUrl: e.target.value || null })} placeholder="Solo per immagini esterne; le foto caricate si gestiscono dalla galleria" /></label>
               <label className="span-4">Descrizione<textarea rows={5} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
             </div>
