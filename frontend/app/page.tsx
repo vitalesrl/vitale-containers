@@ -2,12 +2,40 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { ProductCard } from "@/components/ProductCard";
 import { getProducts } from "@/lib/api";
+import styles from "./home.module.css";
 
 const dimensions = [
   { name: "20' Dry Van / General Purpose", length: "6,06 m", width: "2,44 m", height: "2,59 m", volume: "≈ 33 m³" },
   { name: "40' Dry Van / General Purpose", length: "12,19 m", width: "2,44 m", height: "2,59 m", volume: "≈ 67 m³" },
   { name: "40' High Cube", length: "12,19 m", width: "2,44 m", height: "2,90 m", volume: "≈ 76 m³" },
   { name: "45' High Cube Pallet Wide", length: "13,716 m", width: "2,500 m", height: "2,896 m", volume: "86 m³" }
+];
+
+const useCases = [
+  {
+    number: "01",
+    label: "STOCCAGGIO",
+    title: "Magazzino e deposito",
+    text: "Uno spazio robusto e protetto per attrezzature, materiali, ricambi e merci."
+  },
+  {
+    number: "02",
+    label: "LOGISTICA",
+    title: "Trasporto e movimentazione",
+    text: "Formati standardizzati e versatili per semplificare movimentazione, spedizione e operatività."
+  },
+  {
+    number: "03",
+    label: "SPAZI OPERATIVI",
+    title: "Cantieri e uffici",
+    text: "Soluzioni rapide per uffici temporanei, locali tecnici, spogliatoi e aree di servizio."
+  },
+  {
+    number: "04",
+    label: "PROGETTI SPECIALI",
+    title: "Industria e trasformazioni",
+    text: "Una base solida per impianti tecnici, allestimenti e progetti personalizzati."
+  }
 ];
 
 export default async function HomePage() {
@@ -48,17 +76,38 @@ export default async function HomePage() {
         <div className="product-grid product-grid-wide">{products.map((product) => <ProductCard key={product.id} product={product} />)}</div>
       </section>
 
-      <section className="use-cases">
-        <div className="use-cases-copy">
-          <div className="eyebrow light">SOLUZIONI FLESSIBILI</div>
-          <h2>Un container, molti utilizzi.</h2>
-          <p>Dalla logistica al cantiere, dallo stoccaggio alla trasformazione: strutture robuste e immediatamente utilizzabili.</p>
+      <section className={styles.solutions}>
+        <div className={styles.solutionsHead}>
+          <div>
+            <div className={styles.eyebrow}>SOLUZIONI SU MISURA</div>
+            <h2>Dalla logistica al cantiere,<br />lo spazio che serve.</h2>
+          </div>
+
+          <div className={styles.solutionsIntro}>
+            <p>
+              Un container non è solo trasporto: può diventare deposito,
+              spazio operativo o la base per un progetto personalizzato.
+            </p>
+            <Link href="/container" className={styles.solutionsLink}>
+              Scopri le tipologie <span>→</span>
+            </Link>
+          </div>
         </div>
-        <div className="use-case-grid">
-          <article><b>01</b><strong>Magazzino e deposito</strong><span>Attrezzature, materiali, ricambi e merci protetti dagli agenti atmosferici.</span></article>
-          <article><b>02</b><strong>Trasporto e logistica</strong><span>Soluzioni standardizzate per movimentazione, spedizione e gestione operativa.</span></article>
-          <article><b>03</b><strong>Cantieri e uffici</strong><span>Container allestiti per uffici temporanei, locali operativi e spogliatoi.</span></article>
-          <article><b>04</b><strong>Progetti industriali</strong><span>Una base solida per trasformazioni, impianti tecnici e progetti personalizzati.</span></article>
+
+        <div className={styles.solutionGrid}>
+          {useCases.map((item) => (
+            <article className={styles.solutionCard} key={item.number}>
+              <div className={styles.cardTop}>
+                <span className={styles.cardNumber}>{item.number}</span>
+                <span className={styles.cardLabel}>{item.label}</span>
+              </div>
+              <div className={styles.cardBody}>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </div>
+              <span className={styles.cardLine} aria-hidden="true" />
+            </article>
+          ))}
         </div>
       </section>
 
