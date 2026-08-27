@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyboardEvent, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
 import styles from "./WhatsAppButton.module.css";
 
 const DEFAULT_MESSAGE =
@@ -26,18 +26,30 @@ export function WhatsAppButton() {
 
   if (!number) return null;
 
-  function sendMessage() {
+  function openWhatsApp() {
     const text = message.trim();
     if (!text) return;
 
     const href = `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
-    window.open(href, "_blank", "noopener,noreferrer");
+
+    const newWindow = window.open(href, "_blank");
+
+    if (newWindow) {
+      newWindow.opener = null;
+    } else {
+      window.location.assign(href);
+    }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    openWhatsApp();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      sendMessage();
+      event.currentTarget.form?.requestSubmit();
     }
   }
 
@@ -84,36 +96,37 @@ export function WhatsAppButton() {
             </div>
           </div>
 
-          <div className={styles.composer}>
-            <textarea
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              onKeyDown={handleKeyDown}
-              rows={3}
-              aria-label="Messaggio WhatsApp"
-              placeholder="Scrivi un messaggio..."
-            />
+          <form className={styles.composerForm} onSubmit={handleSubmit}>
+            <div className={styles.composer}>
+              <textarea
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={3}
+                aria-label="Messaggio WhatsApp"
+                placeholder="Scrivi un messaggio..."
+              />
 
-            <button
-              type="button"
-              className={styles.send}
-              onClick={sendMessage}
-              disabled={!message.trim()}
-              aria-label="Invia su WhatsApp"
-              title="Invia su WhatsApp"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M2.3 3.3a1 1 0 0 1 1.06-.21l17 8a1 1 0 0 1 0 1.82l-17 8A1 1 0 0 1 2 20v-5.4a1 1 0 0 1 .77-.97L13 11.25 2.77 8.87A1 1 0 0 1 2 7.9V4a1 1 0 0 1 .3-.7Z"
-                />
-              </svg>
-            </button>
-          </div>
+              <button
+                type="submit"
+                className={styles.send}
+                disabled={!message.trim()}
+                aria-label="Continua su WhatsApp"
+                title="Continua su WhatsApp"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M2.3 3.3a1 1 0 0 1 1.06-.21l17 8a1 1 0 0 1 0 1.82l-17 8A1 1 0 0 1 2 20v-5.4a1 1 0 0 1 .77-.97L13 11.25 2.77 8.87A1 1 0 0 1 2 7.9V4a1 1 0 0 1 .3-.7Z"
+                  />
+                </svg>
+              </button>
+            </div>
 
-          <div className={styles.hint}>
-            Invio per continuare su WhatsApp · Shift+Invio per andare a capo
-          </div>
+            <div className={styles.hint}>
+              Invio per continuare su WhatsApp · Shift+Invio per andare a capo
+            </div>
+          </form>
         </section>
       )}
 
