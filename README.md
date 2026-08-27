@@ -1,4 +1,4 @@
-# Vitale Containers — Media v4
+# Vitale Containers — Gestionale multicanale V5
 
 E-commerce locale e gestionale multicanale per Vitale S.r.l.
 
@@ -162,3 +162,46 @@ Crea l'utente gestionale in Supabase Dashboard → Authentication → Users. Non
 - Subito.it ed eBay sono mostrati separatamente con il proprio stato di collegamento.
 - La tabella generica `marketplace_listings` supporta già il canale `ebay`; non è necessario rieseguire `schema.sql` per questo aggiornamento.
 - La pubblicazione automatica resta disattivata finché non vengono configurati l'account venditore e le API eBay.
+
+## V5.0 — eBay Sell
+
+Il gestionale integra il flusso eBay Sell per:
+
+- collegare un account venditore con OAuth 2.0;
+- importare sedi inventario e policy di spedizione, pagamento e reso;
+- creare l'inventory item e l'offerta a prezzo fisso GTC;
+- pubblicare, aggiornare e ritirare un annuncio;
+- conservare stato, SKU, ID offerta, ID annuncio ed eventuale errore eBay;
+- tenere separati test Sandbox e dati Production.
+
+### 1. Migrazione Supabase
+
+Esegui `database/ebay-sell.sql` nel SQL Editor del progetto Supabase. I refresh token eBay sono memorizzati cifrati in una tabella accessibile soltanto alla service role del backend.
+
+### 2. Configurazione eBay Developer Sandbox
+
+Nel portale eBay Developer seleziona le chiavi **Sandbox** e configura OAuth:
+
+1. crea o apri il Redirect URL/RuName;
+2. imposta come **Auth accepted URL**:
+   `https://TUO-BACKEND.onrender.com/api/ebay/oauth/callback`;
+3. conserva il valore **RuName** generato da eBay (non l'URL);
+4. usa un account venditore di test Sandbox e crea nello stesso ambiente almeno una sede inventario e le policy business di spedizione, pagamento e reso.
+
+### 3. Variabili Render
+
+```env
+EBAY_ENVIRONMENT=sandbox
+EBAY_CLIENT_ID=...
+EBAY_CLIENT_SECRET=...
+EBAY_RUNAME=IL_RUNAME_GENERATO_DA_EBAY
+EBAY_TOKEN_SECRET=UNA_STRINGA_CASUALE_DI_ALMENO_32_CARATTERI
+```
+
+`EBAY_TOKEN_SECRET` cifra i refresh token a riposo e non deve essere condiviso né cambiato dopo aver collegato l'account. Puoi generarlo con `openssl rand -hex 32`.
+
+### 4. Collegamento dal gestionale
+
+Apri `/admin/marketplace`, premi **Collega account eBay**, autorizza l'account venditore di test e seleziona sede e policy. Per ogni prodotto servono titolo, descrizione, prezzo, quantità, almeno una foto pubblica HTTPS e l'ID categoria eBay.
+
+Per passare in Production sostituisci insieme ambiente, Client ID, Client Secret e RuName con quelli Production, configura il relativo Auth accepted URL e ripeti il collegamento OAuth. Le inserzioni Sandbox non vengono mescolate con quelle reali.

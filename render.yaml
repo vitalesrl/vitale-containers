@@ -19,3 +19,13 @@ services:
         sync: false
       - key: SUPABASE_STORAGE_BUCKET
         value: container-images
+      - key: EBAY_ENVIRONMENT
+        value: sandbox
+      - key: EBAY_CLIENT_ID
+        sync: false
+      - key: EBAY_CLIENT_SECRET
+        sync: false
+      - key: EBAY_RUNAME
+        sync: false
+      - key: EBAY_TOKEN_SECRET
+        sync: false

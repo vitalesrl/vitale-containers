@@ -1,4 +1,15 @@
-import type { ContainerUnit, Lead, LeadStatus, MediaAsset, Product } from "./types";
+import type {
+  ContainerUnit,
+  EbayListing,
+  EbayPublishPayload,
+  EbayResources,
+  EbaySettings,
+  EbayStatus,
+  Lead,
+  LeadStatus,
+  MediaAsset,
+  Product
+} from "./types";
 import { getSupabaseBrowserClient } from "./supabaseClient";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4001";
@@ -87,5 +98,18 @@ export const adminApi = {
     setPrimary: (mediaId: string) => request<MediaAsset>(`/api/admin/media/${mediaId}/primary`, { method: "PATCH", body: "{}" }),
     reorder: (type: MediaEntityType, id: string, ids: string[]) => request<MediaAsset[]>(`/api/admin/media/${type}/${id}/order`, { method: "PUT", body: JSON.stringify({ ids }) }),
     remove: (mediaId: string) => request<void>(`/api/admin/media/${mediaId}`, { method: "DELETE" })
+  },
+  ebay: {
+    status: () => request<EbayStatus>("/api/admin/ebay/status"),
+    connect: () => request<{ authorizationUrl: string }>("/api/admin/ebay/connect", { method: "POST" }),
+    disconnect: () => request<void>("/api/admin/ebay/connection", { method: "DELETE" }),
+    resources: () => request<EbayResources>("/api/admin/ebay/resources"),
+    saveSettings: (payload: Omit<EbaySettings, "environment" | "updatedAt">) =>
+      request<EbaySettings>("/api/admin/ebay/settings", { method: "PUT", body: JSON.stringify(payload) }),
+    listings: () => request<EbayListing[]>("/api/admin/ebay/listings"),
+    publish: (productId: string, payload: EbayPublishPayload) =>
+      request<EbayListing>(`/api/admin/ebay/listings/${productId}/publish`, { method: "POST", body: JSON.stringify(payload) }),
+    withdraw: (productId: string) =>
+      request<EbayListing>(`/api/admin/ebay/listings/${productId}/withdraw`, { method: "POST" })
   }
 };
