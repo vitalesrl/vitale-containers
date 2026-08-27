@@ -29,3 +29,5 @@ services:
         sync: false
       - key: EBAY_TOKEN_SECRET
         sync: false
+      - key: SUBITO_ADAPTER_MODE
+        value: manual

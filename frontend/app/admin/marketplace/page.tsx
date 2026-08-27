@@ -10,7 +10,9 @@ import type {
   EbayResources,
   EbaySettings,
   EbayStatus,
-  Product
+  Product,
+  SubitoListing,
+  SubitoStatusInfo
 } from "@/lib/types";
 
 type SettingsDraft = Omit<EbaySettings, "environment" | "updatedAt">;
@@ -82,11 +84,31 @@ function defaultListingDraft(product: Product, listing?: EbayListing): ListingDr
   };
 }
 
+function subitoListingLabel(listing?: SubitoListing) {
+  if (!listing) return "Da preparare";
+  if (listing.subitoStatus === "active") return "Pubblicato";
+  if (listing.subitoStatus === "sold") return "Venduto";
+  if (listing.subitoStatus === "error") return "Errore";
+  return "Preparato";
+}
+
+function euro(value: number | null) {
+  if (value === null) return "Prezzo su richiesta";
+  return new Intl.NumberFormat("it-IT", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0
+  }).format(value);
+}
+
 export default function MarketplacePage() {
   const [status, setStatus] = useState<EbayStatus | null>(null);
   const [resources, setResources] = useState<EbayResources | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [listings, setListings] = useState<EbayListing[]>([]);
+  const [subitoStatus, setSubitoStatus] = useState<SubitoStatusInfo | null>(null);
+  const [subitoListings, setSubitoListings] = useState<SubitoListing[]>([]);
+  const [subitoReferences, setSubitoReferences] = useState<Record<string, { url: string; id: string }>>({});
   const [settings, setSettings] = useState<SettingsDraft>(emptySettings);
   const [drafts, setDrafts] = useState<Record<string, ListingDraft>>({});
   const [loading, setLoading] = useState(true);
@@ -98,13 +120,23 @@ export default function MarketplacePage() {
     () => new Map(listings.map((listing) => [listing.productId, listing])),
     [listings]
   );
+  const subitoByProduct = useMemo(
+    () => new Map(subitoListings.map((listing) => [listing.productId, listing])),
+    [subitoListings]
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const nextStatus = await adminApi.ebay.status();
+      const [nextStatus, nextProducts, nextSubitoStatus] = await Promise.all([
+        adminApi.ebay.status(),
+        adminApi.products.list(),
+        adminApi.subito.status()
+      ]);
       setStatus(nextStatus);
+      setProducts(nextProducts);
+      setSubitoStatus(nextSubitoStatus);
       setSettings(nextStatus.settings
         ? {
             marketplaceId: nextStatus.settings.marketplaceId,
@@ -116,20 +148,28 @@ export default function MarketplacePage() {
           }
         : emptySettings);
 
+      if (nextSubitoStatus.databaseReady) {
+        const nextSubitoListings = await adminApi.subito.listings();
+        setSubitoListings(nextSubitoListings);
+        setSubitoReferences(Object.fromEntries(nextSubitoListings.map((listing) => [
+          listing.productId,
+          { url: listing.subitoListingUrl ?? "", id: listing.subitoListingId ?? "" }
+        ])));
+      } else {
+        setSubitoListings([]);
+      }
+
       if (!nextStatus.connected) {
         setResources(null);
-        setProducts([]);
         setListings([]);
         return;
       }
 
-      const [nextResources, nextProducts, nextListings] = await Promise.all([
+      const [nextResources, nextListings] = await Promise.all([
         adminApi.ebay.resources(),
-        adminApi.products.list(),
         adminApi.ebay.listings()
       ]);
       setResources(nextResources);
-      setProducts(nextProducts);
       setListings(nextListings);
       const byProduct = new Map(nextListings.map((listing) => [listing.productId, listing]));
       setDrafts((current) => {
@@ -269,16 +309,85 @@ export default function MarketplacePage() {
     }
   }
 
+  function saveSubitoListing(saved: SubitoListing) {
+    setSubitoListings((current) => [
+      saved,
+      ...current.filter((item) => item.productId !== saved.productId)
+    ]);
+    setSubitoReferences((current) => ({
+      ...current,
+      [saved.productId]: {
+        url: saved.subitoListingUrl ?? current[saved.productId]?.url ?? "",
+        id: saved.subitoListingId ?? current[saved.productId]?.id ?? ""
+      }
+    }));
+  }
+
+  async function prepareSubito(product: Product) {
+    setBusy(`subito-prepare-${product.id}`);
+    setError("");
+    setNotice("");
+    try {
+      const saved = await adminApi.subito.prepare(product.id);
+      saveSubitoListing(saved);
+      setNotice(`Annuncio Subito preparato per “${product.title}”.`);
+    } catch (nextError) {
+      setError(messageOf(nextError));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function copySubito(value: string, label: string) {
+    setError("");
+    try {
+      await navigator.clipboard.writeText(value);
+      setNotice(`${label} copiato negli appunti.`);
+    } catch {
+      setError("Il browser non ha consentito la copia negli appunti.");
+    }
+  }
+
+  async function downloadSubitoPhotos(product: Product) {
+    setBusy(`subito-photos-${product.id}`);
+    setError("");
+    setNotice("");
+    try {
+      await adminApi.subito.downloadPhotos(product.id);
+      setNotice(`Archivio foto Subito scaricato per “${product.title}”.`);
+    } catch (nextError) {
+      setError(messageOf(nextError));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function markSubitoPublished(product: Product) {
+    const reference = subitoReferences[product.id] ?? { url: "", id: "" };
+    setBusy(`subito-published-${product.id}`);
+    setError("");
+    setNotice("");
+    try {
+      const saved = await adminApi.subito.markPublished(product.id, reference.url, reference.id);
+      saveSubitoListing(saved);
+      setNotice(`“${product.title}” segnato come pubblicato su Subito.`);
+    } catch (nextError) {
+      setError(messageOf(nextError));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const readyToPublish = Boolean(status?.settings);
 
   return (
     <>
       <header className="admin-head ebay-head">
         <div>
-          <div className="eyebrow">MULTICANALE · EBAY SELL</div>
+          <div className="eyebrow">MULTICANALE · EBAY + SUBITO</div>
           <h1>Marketplace</h1>
           <p className="admin-subtitle">
-            Collega l&apos;account venditore e pubblica il catalogo Vitale su eBay Italia.
+            Gestisci eBay via API e prepara gli annunci Subito dal catalogo Vitale.
           </p>
         </div>
         {status?.connected ? (
@@ -299,10 +408,10 @@ export default function MarketplacePage() {
           <b>ATTIVO</b>
         </div>
         <div className="channel-row">
-          <span className="status-dot" aria-hidden="true" />
+          <span className={`status-dot ${subitoStatus?.databaseReady && subitoStatus.adapterAvailable ? "assisted" : ""}`} aria-hidden="true" />
           <strong>Subito.it</strong>
-          <span>In attesa della verifica del canale professionale/API disponibile.</span>
-          <b>NON COLLEGATO</b>
+          <span>Generazione annuncio, copia contenuti, foto ZIP e tracciamento manuale.</span>
+          <b>{subitoStatus?.databaseReady && subitoStatus.adapterAvailable ? "ASSISTITO" : "DA CONFIGURARE"}</b>
         </div>
         <div className="channel-row">
           <span className={`status-dot ${status?.connected ? "online" : ""}`} aria-hidden="true" />
@@ -317,6 +426,130 @@ export default function MarketplacePage() {
           <b>{status?.connected ? "COLLEGATO" : "NON COLLEGATO"}</b>
         </div>
       </section>
+
+      {!loading && subitoStatus ? (
+        <section className="admin-panel subito-panel">
+          <div className="editor-head subito-head">
+            <div>
+              <div className="eyebrow">SUBITOADAPTER · {subitoStatus.mode.toUpperCase()}</div>
+              <h2>Subito assistito</h2>
+              <p className="admin-subtitle">
+                Prepara l&apos;annuncio dai dati prodotto, completa la pubblicazione su Subito e registra il collegamento.
+              </p>
+            </div>
+            <a className="button button-outline" href="https://www.subito.it/vendere/" target="_blank" rel="noreferrer">
+              Apri Subito ↗
+            </a>
+          </div>
+
+          {!subitoStatus.databaseReady ? (
+            <div className="ebay-prerequisite">
+              Esegui <code>database/subito-assisted.sql</code> nel SQL Editor di Supabase per attivare i comandi.
+            </div>
+          ) : null}
+
+          {!subitoStatus.adapterAvailable ? (
+            <div className="ebay-prerequisite">
+              L&apos;adapter API non è ancora disponibile. Imposta <code>SUBITO_ADAPTER_MODE=manual</code>.
+            </div>
+          ) : null}
+
+          {subitoStatus.databaseReady && subitoStatus.adapterAvailable ? (
+            <div className="subito-product-list">
+              {products.length === 0 ? <div className="ebay-empty">Non ci sono prodotti nel catalogo.</div> : null}
+              {products.map((product) => {
+                const listing = subitoByProduct.get(product.id);
+                const reference = subitoReferences[product.id] ?? {
+                  url: listing?.subitoListingUrl ?? "",
+                  id: listing?.subitoListingId ?? ""
+                };
+                const image = product.images?.find((item) => item.isPrimary)?.url
+                  || product.images?.[0]?.url
+                  || product.imageUrl;
+                return (
+                  <article className="subito-product" key={product.id}>
+                    <div className="subito-product-bar">
+                      <div className="ebay-product-summary">
+                        <div className="ebay-product-photo">
+                          {image ? <img src={image} alt="" /> : <span>Nessuna foto</span>}
+                        </div>
+                        <div>
+                          <strong>{product.title}</strong>
+                          <small>{product.size} · {product.type}</small>
+                          {listing?.subitoListingUrl ? (
+                            <a href={listing.subitoListingUrl} target="_blank" rel="noreferrer">Apri annuncio pubblicato ↗</a>
+                          ) : null}
+                        </div>
+                      </div>
+                      <span className={`subito-listing-status ${listing?.subitoStatus ?? "none"}`}>
+                        {subitoListingLabel(listing)}
+                      </span>
+                    </div>
+
+                    {listing ? (
+                      <div className="subito-preview">
+                        <div className="subito-preview-head">
+                          <div>
+                            <strong>{listing.title}</strong>
+                            <span>{euro(listing.price)} · {listing.location}</span>
+                          </div>
+                          <span>{listing.photoCount} foto</span>
+                        </div>
+                        <pre>{listing.description}</pre>
+                        <div className="subito-reference-grid">
+                          <label>
+                            URL annuncio Subito
+                            <input
+                              value={reference.url}
+                              onChange={(event) => setSubitoReferences((current) => ({
+                                ...current,
+                                [product.id]: { ...reference, url: event.target.value }
+                              }))}
+                              placeholder="https://www.subito.it/..."
+                            />
+                          </label>
+                          <label>
+                            ID annuncio (facoltativo)
+                            <input
+                              value={reference.id}
+                              onChange={(event) => setSubitoReferences((current) => ({
+                                ...current,
+                                [product.id]: { ...reference, id: event.target.value }
+                              }))}
+                              placeholder="Ricavato automaticamente dall'URL"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="subito-not-prepared">Premi “Prepara annuncio” per generare titolo, descrizione e prezzo.</p>
+                    )}
+
+                    <div className="subito-commands">
+                      <button type="button" onClick={() => void prepareSubito(product)} disabled={busy !== null}>
+                        {busy === `subito-prepare-${product.id}` ? "Preparazione…" : "Prepara annuncio"}
+                      </button>
+                      <a href="https://www.subito.it/vendere/" target="_blank" rel="noreferrer">Apri Subito</a>
+                      <button type="button" disabled={!listing || busy !== null} onClick={() => listing && void copySubito(listing.title, "Titolo")}>
+                        Copia titolo
+                      </button>
+                      <button type="button" disabled={!listing || busy !== null} onClick={() => listing && void copySubito(listing.description, "Descrizione")}>
+                        Copia descrizione
+                      </button>
+                      <button type="button" disabled={busy !== null} onClick={() => void downloadSubitoPhotos(product)}>
+                        {busy === `subito-photos-${product.id}` ? "Download…" : "Scarica foto"}
+                      </button>
+                      <button className="primary" type="button" disabled={!listing || busy !== null} onClick={() => void markSubitoPublished(product)}>
+                        {busy === `subito-published-${product.id}` ? "Salvataggio…" : "Segna come pubblicato"}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       {!loading && status && !status.connected ? (
         <section className="admin-panel ebay-onboarding">
