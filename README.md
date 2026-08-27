@@ -155,3 +155,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ### Primo accesso
 
 Crea l'utente gestionale in Supabase Dashboard → Authentication → Users. Non serve una nuova esecuzione di `schema.sql` per attivare il login V4.5.
+
+## V4.6 — Marketplace eBay
+
+- Aggiunto eBay tra i canali di vendita alternativi nella pagina `/admin/marketplace`.
+- Subito.it ed eBay sono mostrati separatamente con il proprio stato di collegamento.
+- La tabella generica `marketplace_listings` supporta già il canale `ebay`; non è necessario rieseguire `schema.sql` per questo aggiornamento.
+- La pubblicazione automatica resta disattivata finché non vengono configurati l'account venditore e le API eBay.
