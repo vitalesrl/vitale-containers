@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { ProductCard } from "@/components/ProductCard";
+import { QuoteRequestButton } from "@/components/QuoteRequestButton";
 import { getProducts } from "@/lib/api";
 import styles from "./home.module.css";
 
@@ -143,7 +144,7 @@ export default async function HomePage() {
           <h2>Trasporto disponibile in tutta Italia.</h2>
           <p>È possibile ritirare il container in sede oppure richiedere l&apos;organizzazione del trasporto. I costi vengono valutati in base alla destinazione e alla tipologia di container.</p>
         </div>
-        <a className="button button-light" href="#contatti">Richiedi una quotazione</a>
+        <QuoteRequestButton className="button button-light" />
       </section>
 
       <section className="contact-section" id="contatti">
