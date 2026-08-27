@@ -70,16 +70,60 @@ create table if not exists public.marketplace_listings (
   id uuid primary key default gen_random_uuid(),
   product_id uuid not null references public.products(id) on delete cascade,
   marketplace text not null,
+  marketplace_environment text not null default 'production' check (marketplace_environment in ('sandbox','production')),
+  sku text,
+  external_offer_id text,
   external_listing_id text,
   external_url text,
+  category_id text,
   title text,
   description text,
   price numeric(12,2),
   status text not null default 'draft' check (status in ('draft','active','paused','sold','error')),
   sync_status text not null default 'pending',
+  last_error text,
+  metadata jsonb not null default '{}'::jsonb,
   published_at timestamptz,
   updated_at timestamptz not null default now(),
-  unique(product_id, marketplace)
+  unique(product_id, marketplace, marketplace_environment)
+);
+
+-- Aggiornamento idempotente per installazioni create prima di V5.0.
+alter table public.marketplace_listings
+  add column if not exists marketplace_environment text not null default 'production' check (marketplace_environment in ('sandbox','production')),
+  add column if not exists sku text,
+  add column if not exists external_offer_id text,
+  add column if not exists category_id text,
+  add column if not exists last_error text,
+  add column if not exists metadata jsonb not null default '{}'::jsonb;
+
+alter table public.marketplace_listings
+  drop constraint if exists marketplace_listings_product_id_marketplace_key;
+
+create unique index if not exists marketplace_listings_product_market_env_uidx
+  on public.marketplace_listings(product_id, marketplace, marketplace_environment);
+
+create index if not exists marketplace_listings_channel_status_idx
+  on public.marketplace_listings(marketplace, marketplace_environment, status);
+
+create table if not exists public.ebay_connections (
+  environment text primary key check (environment in ('sandbox','production')),
+  refresh_token_encrypted text not null,
+  refresh_token_expires_at timestamptz,
+  scopes text[] not null default '{}',
+  connected_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.ebay_settings (
+  environment text primary key check (environment in ('sandbox','production')),
+  marketplace_id text not null default 'EBAY_IT',
+  merchant_location_key text not null,
+  fulfillment_policy_id text not null,
+  payment_policy_id text not null,
+  return_policy_id text not null,
+  currency text not null default 'EUR',
+  updated_at timestamptz not null default now()
 );
 
 
@@ -119,6 +163,8 @@ alter table public.products enable row level security;
 alter table public.containers enable row level security;
 alter table public.leads enable row level security;
 alter table public.marketplace_listings enable row level security;
+alter table public.ebay_connections enable row level security;
+alter table public.ebay_settings enable row level security;
 alter table public.media_assets enable row level security;
 alter table public.profiles enable row level security;
 

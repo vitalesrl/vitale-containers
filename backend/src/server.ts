@@ -9,6 +9,7 @@ import { leadRoutes } from "./routes/leads.js";
 import { adminRoutes } from "./routes/admin.js";
 import { containerRoutes } from "./routes/containers.js";
 import { mediaRoutes } from "./routes/media.js";
+import { ebayRoutes } from "./routes/ebay.js";
 import { localUploadsRoot } from "./lib/media.js";
 import { requireAdminAuth } from "./lib/auth.js";
 
@@ -58,6 +59,7 @@ await app.register(containerRoutes);
 await app.register(leadRoutes);
 await app.register(adminRoutes);
 await app.register(mediaRoutes);
+await app.register(ebayRoutes);
 
 try {
   await app.listen({ port, host: "0.0.0.0" });
