@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import styles from "./WhatsAppButton.module.css";
 
 const DEFAULT_MESSAGE =
@@ -11,6 +12,8 @@ function normalizeWhatsAppNumber(value: string) {
 }
 
 export function WhatsAppButton() {
+  const pathname = usePathname();
+
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(
     process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE?.trim() || DEFAULT_MESSAGE
@@ -24,6 +27,7 @@ export function WhatsAppButton() {
     []
   );
 
+  if (pathname?.startsWith("/admin")) return null;
   if (!number) return null;
 
   function openWhatsApp() {
