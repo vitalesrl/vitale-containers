@@ -169,6 +169,8 @@ async function upsertListing(productId: string, values: Record<string, unknown>)
       product_id: productId,
       marketplace: "ebay",
       marketplace_environment: environment,
+      adapter_mode: "api",
+      last_sync_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       ...values
     }, { onConflict: "product_id,marketplace,marketplace_environment" })

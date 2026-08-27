@@ -8,7 +8,9 @@ import type {
   Lead,
   LeadStatus,
   MediaAsset,
-  Product
+  Product,
+  SubitoListing,
+  SubitoStatusInfo
 } from "./types";
 import { getSupabaseBrowserClient } from "./supabaseClient";
 
@@ -74,6 +76,34 @@ async function uploadMedia(type: MediaEntityType, id: string, files: File[]) {
   return response.json() as Promise<MediaAsset[]>;
 }
 
+async function downloadFile(path: string) {
+  const { data: { session } } = await getSupabaseBrowserClient().auth.getSession();
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+      cache: "no-store"
+    });
+  } catch {
+    throw new Error(`Backend non raggiungibile su ${API_URL}.`);
+  }
+  if (!response.ok) {
+    let message = `Errore ${response.status}`;
+    try { const data = await response.json(); message = data.error || message; } catch {}
+    throw new Error(message);
+  }
+  const disposition = response.headers.get("content-disposition") || "";
+  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] || "foto-subito.zip";
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 export const adminApi = {
   products: {
     list: () => request<Product[]>("/api/admin/products"),
@@ -111,5 +141,18 @@ export const adminApi = {
       request<EbayListing>(`/api/admin/ebay/listings/${productId}/publish`, { method: "POST", body: JSON.stringify(payload) }),
     withdraw: (productId: string) =>
       request<EbayListing>(`/api/admin/ebay/listings/${productId}/withdraw`, { method: "POST" })
+  },
+  subito: {
+    status: () => request<SubitoStatusInfo>("/api/admin/subito/status"),
+    listings: () => request<SubitoListing[]>("/api/admin/subito/listings"),
+    prepare: (productId: string) =>
+      request<SubitoListing>(`/api/admin/subito/listings/${productId}/prepare`, { method: "POST" }),
+    markPublished: (productId: string, listingUrl?: string, listingId?: string) =>
+      request<SubitoListing>(`/api/admin/subito/listings/${productId}/published`, {
+        method: "PATCH",
+        body: JSON.stringify({ listingUrl: listingUrl || "", listingId: listingId || "" })
+      }),
+    downloadPhotos: (productId: string) =>
+      downloadFile(`/api/admin/subito/listings/${productId}/photos`)
   }
 };

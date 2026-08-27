@@ -205,3 +205,33 @@ EBAY_TOKEN_SECRET=UNA_STRINGA_CASUALE_DI_ALMENO_32_CARATTERI
 Apri `/admin/marketplace`, premi **Collega account eBay**, autorizza l'account venditore di test e seleziona sede e policy. Per ogni prodotto servono titolo, descrizione, prezzo, quantità, almeno una foto pubblica HTTPS e l'ID categoria eBay.
 
 Per passare in Production sostituisci insieme ambiente, Client ID, Client Secret e RuName con quelli Production, configura il relativo Auth accepted URL e ripeti il collegamento OAuth. Le inserzioni Sandbox non vengono mescolate con quelle reali.
+
+## V5.1 — Subito assistito
+
+In attesa di un feed o accesso API professionale ufficiale, `SubitoAdapter` opera in modalità `manual`. Dalla pagina `/admin/marketplace` è possibile:
+
+- preparare automaticamente titolo, descrizione, prezzo e località dai dati prodotto;
+- aprire la pagina ufficiale di vendita Subito;
+- copiare separatamente titolo e descrizione;
+- scaricare tutte le foto in un archivio ZIP; WEBP e AVIF vengono convertite in JPG;
+- registrare URL e ID dell'annuncio e segnarlo come pubblicato.
+
+Esegui `database/subito-assisted.sql` nel SQL Editor di Supabase. Il file è idempotente e completa anche le colonne generiche di `marketplace_listings` necessarie all'adapter.
+
+I valori richiesti sono già esposti dalla vista `subito_listings`:
+
+```text
+subito_status
+subito_listing_url
+subito_listing_id
+subito_published_at
+subito_last_sync
+```
+
+La sorgente dati rimane la tabella multicanale `marketplace_listings`, con `adapter_mode=manual`. Quando sarà disponibile l'accesso ufficiale sarà sufficiente implementare l'adapter `api` e impostare:
+
+```env
+SUBITO_ADAPTER_MODE=api
+```
+
+Interfaccia, record prodotto e storico delle pubblicazioni non dovranno essere migrati. La modalità manuale non esegue scraping, login automatici o compilazioni simulate sul sito Subito.

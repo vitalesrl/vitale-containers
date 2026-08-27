@@ -188,3 +188,30 @@ export type EbayPublishPayload = {
   brand?: string;
   aspects?: Record<string, string[]>;
 };
+
+export type SubitoAdapterMode = "manual" | "api";
+
+export type SubitoStatusInfo = {
+  mode: SubitoAdapterMode;
+  adapterAvailable: boolean;
+  databaseReady: boolean;
+};
+
+export type SubitoListing = {
+  id: string;
+  productId: string;
+  productTitle: string | null;
+  adapterMode: SubitoAdapterMode;
+  subitoStatus: "draft" | "active" | "paused" | "sold" | "error";
+  subitoListingUrl: string | null;
+  subitoListingId: string | null;
+  subitoPublishedAt: string | null;
+  subitoLastSync: string | null;
+  title: string;
+  description: string;
+  price: number | null;
+  location: string;
+  photoCount: number;
+  lastError: string | null;
+  updatedAt: string;
+};

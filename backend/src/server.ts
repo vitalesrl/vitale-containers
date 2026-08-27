@@ -10,6 +10,7 @@ import { adminRoutes } from "./routes/admin.js";
 import { containerRoutes } from "./routes/containers.js";
 import { mediaRoutes } from "./routes/media.js";
 import { ebayRoutes } from "./routes/ebay.js";
+import { subitoRoutes } from "./routes/subito.js";
 import { localUploadsRoot } from "./lib/media.js";
 import { requireAdminAuth } from "./lib/auth.js";
 
@@ -60,6 +61,7 @@ await app.register(leadRoutes);
 await app.register(adminRoutes);
 await app.register(mediaRoutes);
 await app.register(ebayRoutes);
+await app.register(subitoRoutes);
 
 try {
   await app.listen({ port, host: "0.0.0.0" });

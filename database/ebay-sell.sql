@@ -3,11 +3,17 @@
 
 alter table public.marketplace_listings
   add column if not exists marketplace_environment text not null default 'production' check (marketplace_environment in ('sandbox','production')),
+  add column if not exists adapter_mode text not null default 'manual' check (adapter_mode in ('manual','api')),
   add column if not exists sku text,
   add column if not exists external_offer_id text,
   add column if not exists category_id text,
   add column if not exists last_error text,
-  add column if not exists metadata jsonb not null default '{}'::jsonb;
+  add column if not exists metadata jsonb not null default '{}'::jsonb,
+  add column if not exists last_sync_at timestamptz;
+
+update public.marketplace_listings
+set adapter_mode = 'api'
+where marketplace = 'ebay' and adapter_mode <> 'api';
 
 alter table public.marketplace_listings
   drop constraint if exists marketplace_listings_product_id_marketplace_key;
