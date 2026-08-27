@@ -132,6 +132,41 @@
   line-height:1.5;
 }
 
+.wakingNotice{
+  padding:14px 15px;
+  display:flex;
+  align-items:center;
+  gap:13px;
+  border:1px solid #cbd8ee;
+  background:#f4f7fc;
+  color:#29466f;
+}
+
+.wakingNotice>div{
+  display:grid;
+  gap:3px;
+}
+
+.wakingNotice strong{
+  font-size:12px;
+}
+
+.wakingNotice div span{
+  color:#63758d;
+  font-size:10px;
+  line-height:1.45;
+}
+
+.wakingSpinner{
+  width:24px;
+  height:24px;
+  flex:0 0 auto;
+  border:3px solid #d8e1ef;
+  border-top-color:#234aa5;
+  border-radius:50%;
+  animation:wakeSpin .8s linear infinite;
+}
+
 .error{
   padding:12px 14px;
   border:1px solid #efc4c8;
@@ -211,6 +246,10 @@
   font-size:14px;
 }
 
+@keyframes wakeSpin{
+  to{transform:rotate(360deg)}
+}
+
 @media(max-width:700px){
   .overlay{
     padding:12px;
@@ -245,5 +284,11 @@
   .primaryButton,
   .secondaryButton{
     width:100%;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .wakingSpinner{
+    animation-duration:1.8s;
   }
 }

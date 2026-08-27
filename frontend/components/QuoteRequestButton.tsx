@@ -1,6 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import {
+  FormEvent,
+  useEffect,
+  useState
+} from "react";
+import { waitForBackendReady } from "@/lib/backendReady";
 import styles from "./QuoteRequestButton.module.css";
 
 type QuoteRequestButtonProps = {
@@ -27,7 +32,8 @@ const EMPTY_FORM: QuoteForm = {
 };
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4001";
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:4001";
 
 export function QuoteRequestButton({
   className = "",
@@ -36,42 +42,59 @@ export function QuoteRequestButton({
   productTitle
 }: QuoteRequestButtonProps) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<QuoteForm>(EMPTY_FORM);
+  const [form, setForm] =
+    useState<QuoteForm>(EMPTY_FORM);
   const [sending, setSending] = useState(false);
+  const [waking, setWaking] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!open) return;
 
-    const previousOverflow = document.body.style.overflow;
+    const previousOverflow =
+      document.body.style.overflow;
+
     document.body.style.overflow = "hidden";
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") closeModal();
     }
 
-    window.addEventListener("keydown", handleEscape);
+    window.addEventListener(
+      "keydown",
+      handleEscape
+    );
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow =
+        previousOverflow;
+
+      window.removeEventListener(
+        "keydown",
+        handleEscape
+      );
     };
   }, [open]);
 
   function closeModal() {
     if (sending) return;
+
     setOpen(false);
     setError("");
+    setWaking(false);
   }
 
   function openModal() {
     setSuccess(false);
     setError("");
+    setWaking(false);
     setOpen(true);
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     const firstName = form.firstName.trim();
@@ -87,41 +110,65 @@ export function QuoteRequestButton({
       city.length < 2 ||
       message.length < 5
     ) {
-      setError("Compila tutti i campi richiesti.");
+      setError(
+        "Compila tutti i campi richiesti."
+      );
       return;
     }
 
     setSending(true);
+    setWaking(false);
     setError("");
 
     try {
-      const response = await fetch(`${API_URL}/api/leads`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          productId: productId || undefined,
-          name: `${firstName} ${lastName}`,
-          phone,
-          destination: city,
-          quantity: 1,
-          transportRequired: false,
-          message:
-            productTitle
+      const backendReady =
+        await waitForBackendReady({
+          onWaking: () => setWaking(true)
+        });
+
+      if (!backendReady) {
+        throw new Error(
+          "Il servizio non è ancora disponibile. Riprova tra qualche secondo."
+        );
+      }
+
+      setWaking(false);
+
+      const response = await fetch(
+        `${API_URL}/api/leads`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+          body: JSON.stringify({
+            productId:
+              productId || undefined,
+            name: `${firstName} ${lastName}`,
+            phone,
+            destination: city,
+            quantity: 1,
+            transportRequired: false,
+            message: productTitle
               ? `Prodotto: ${productTitle}\n\n${message}`
               : message
-        })
-      });
+          })
+        }
+      );
 
       if (!response.ok) {
-        let messageText = "Invio della richiesta non riuscito.";
+        let messageText =
+          "Invio della richiesta non riuscito.";
 
         try {
           const body = await response.json();
-          if (body?.error) messageText = body.error;
+
+          if (body?.error) {
+            messageText = body.error;
+          }
         } catch {
-          // risposta non JSON: mantieni messaggio generico
+          // Mantieni il messaggio generico.
         }
 
         throw new Error(messageText);
@@ -136,6 +183,7 @@ export function QuoteRequestButton({
           : "Invio della richiesta non riuscito."
       );
     } finally {
+      setWaking(false);
       setSending(false);
     }
   }
@@ -155,7 +203,12 @@ export function QuoteRequestButton({
           className={styles.overlay}
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeModal();
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              closeModal();
+            }
           }}
         >
           <section
@@ -166,11 +219,20 @@ export function QuoteRequestButton({
           >
             <div className={styles.modalHead}>
               <div>
-                <div className={styles.eyebrow}>RICHIESTA DI QUOTAZIONE</div>
-                <h2 id="quote-title">Ti ricontattiamo noi.</h2>
+                <div
+                  className={styles.eyebrow}
+                >
+                  RICHIESTA DI QUOTAZIONE
+                </div>
+
+                <h2 id="quote-title">
+                  Ti ricontattiamo noi.
+                </h2>
+
                 <p>
-                  Lasciaci i tuoi recapiti e descrivi brevemente ciò di cui hai
-                  bisogno.
+                  Lasciaci i tuoi recapiti e
+                  descrivi brevemente ciò di cui
+                  hai bisogno.
                 </p>
               </div>
 
@@ -186,29 +248,55 @@ export function QuoteRequestButton({
 
             {success ? (
               <div className={styles.success}>
-                <div className={styles.successIcon}>✓</div>
+                <div
+                  className={
+                    styles.successIcon
+                  }
+                >
+                  ✓
+                </div>
+
                 <h3>Richiesta inviata</h3>
+
                 <p>
-                  Abbiamo ricevuto i tuoi dati. Un nostro referente ti
+                  Abbiamo ricevuto i tuoi dati.
+                  Un nostro referente ti
                   ricontatterà appena possibile.
                 </p>
+
                 <button
                   type="button"
-                  className={styles.primaryButton}
+                  className={
+                    styles.primaryButton
+                  }
                   onClick={closeModal}
                 >
                   Chiudi
                 </button>
               </div>
             ) : (
-              <form onSubmit={submit} className={styles.form}>
+              <form
+                onSubmit={submit}
+                className={styles.form}
+              >
                 {productTitle && (
-                  <div className={styles.productReference}>
-                    Richiesta per <strong>{productTitle}</strong>
+                  <div
+                    className={
+                      styles.productReference
+                    }
+                  >
+                    Richiesta per{" "}
+                    <strong>
+                      {productTitle}
+                    </strong>
                   </div>
                 )}
 
-                <div className={styles.twoColumns}>
+                <div
+                  className={
+                    styles.twoColumns
+                  }
+                >
                   <label>
                     <span>Nome *</span>
                     <input
@@ -218,7 +306,8 @@ export function QuoteRequestButton({
                       onChange={(event) =>
                         setForm({
                           ...form,
-                          firstName: event.target.value
+                          firstName:
+                            event.target.value
                         })
                       }
                       placeholder="Nome"
@@ -234,7 +323,8 @@ export function QuoteRequestButton({
                       onChange={(event) =>
                         setForm({
                           ...form,
-                          lastName: event.target.value
+                          lastName:
+                            event.target.value
                         })
                       }
                       placeholder="Cognome"
@@ -242,9 +332,15 @@ export function QuoteRequestButton({
                   </label>
                 </div>
 
-                <div className={styles.twoColumns}>
+                <div
+                  className={
+                    styles.twoColumns
+                  }
+                >
                   <label>
-                    <span>Numero di telefono *</span>
+                    <span>
+                      Numero di telefono *
+                    </span>
                     <input
                       required
                       type="tel"
@@ -253,7 +349,8 @@ export function QuoteRequestButton({
                       onChange={(event) =>
                         setForm({
                           ...form,
-                          phone: event.target.value
+                          phone:
+                            event.target.value
                         })
                       }
                       placeholder="+39 333 1234567"
@@ -269,7 +366,8 @@ export function QuoteRequestButton({
                       onChange={(event) =>
                         setForm({
                           ...form,
-                          city: event.target.value
+                          city:
+                            event.target.value
                         })
                       }
                       placeholder="Es. Salerno"
@@ -278,7 +376,9 @@ export function QuoteRequestButton({
                 </div>
 
                 <label>
-                  <span>Descrivi la tua necessità *</span>
+                  <span>
+                    Descrivi la tua necessità *
+                  </span>
                   <textarea
                     required
                     rows={5}
@@ -286,29 +386,74 @@ export function QuoteRequestButton({
                     onChange={(event) =>
                       setForm({
                         ...form,
-                        message: event.target.value
+                        message:
+                          event.target.value
                       })
                     }
                     placeholder="Es. Cerco un container 40' HC per uso deposito con consegna a..."
                   />
                 </label>
 
-                <p className={styles.contactNotice}>
-                  Inviando la richiesta ci autorizzi a utilizzare i dati
-                  indicati esclusivamente per ricontattarti in merito alla
+                <p
+                  className={
+                    styles.contactNotice
+                  }
+                >
+                  Inviando la richiesta ci
+                  autorizzi a utilizzare i dati
+                  indicati esclusivamente per
+                  ricontattarti in merito alla
                   quotazione richiesta.
                 </p>
 
+                {waking && (
+                  <div
+                    className={
+                      styles.wakingNotice
+                    }
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <span
+                      className={
+                        styles.wakingSpinner
+                      }
+                      aria-hidden="true"
+                    />
+
+                    <div>
+                      <strong>
+                        Stiamo riattivando il
+                        servizio…
+                      </strong>
+                      <span>
+                        Il backend era in pausa.
+                        Può richiedere qualche
+                        secondo; la richiesta
+                        partirà automaticamente
+                        appena sarà pronto.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {error && (
-                  <div className={styles.error} role="alert">
+                  <div
+                    className={styles.error}
+                    role="alert"
+                  >
                     {error}
                   </div>
                 )}
 
-                <div className={styles.actions}>
+                <div
+                  className={styles.actions}
+                >
                   <button
                     type="button"
-                    className={styles.secondaryButton}
+                    className={
+                      styles.secondaryButton
+                    }
                     onClick={closeModal}
                     disabled={sending}
                   >
@@ -317,10 +462,16 @@ export function QuoteRequestButton({
 
                   <button
                     type="submit"
-                    className={styles.primaryButton}
+                    className={
+                      styles.primaryButton
+                    }
                     disabled={sending}
                   >
-                    {sending ? "Invio in corso…" : "Invia richiesta"}
+                    {waking
+                      ? "Riattivazione servizio…"
+                      : sending
+                        ? "Invio in corso…"
+                        : "Invia richiesta"}
                   </button>
                 </div>
               </form>
