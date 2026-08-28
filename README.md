@@ -235,3 +235,10 @@ SUBITO_ADAPTER_MODE=api
 ```
 
 Interfaccia, record prodotto e storico delle pubblicazioni non dovranno essere migrati. La modalità manuale non esegue scraping, login automatici o compilazioni simulate sul sito Subito.
+
+## V5.2 — Marketplace comprimibili
+
+- Ogni canale di vendita dispone del proprio pulsante **Mostra/Nascondi**.
+- Le aree operative Subito.it ed eBay possono essere chiuse separatamente per mantenere ordinata la pagina.
+- Lo stato scelto viene conservato nel browser e ripristinato agli accessi successivi.
+- Al primo accesso i marketplace sono chiusi; stato e comandi principali restano sempre visibili.

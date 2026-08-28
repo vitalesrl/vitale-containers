@@ -23,6 +23,15 @@ type ListingDraft = {
   quantity: string;
   brand: string;
 };
+type MarketplaceKey = "site" | "subito" | "ebay";
+type ExpandedMarketplaces = Record<MarketplaceKey, boolean>;
+
+const marketplaceVisibilityStorageKey = "vitale-marketplace-visibility";
+const defaultExpandedMarketplaces: ExpandedMarketplaces = {
+  site: false,
+  subito: false,
+  ebay: false
+};
 
 const emptySettings: SettingsDraft = {
   marketplaceId: "EBAY_IT",
@@ -115,6 +124,9 @@ export default function MarketplacePage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [expandedMarketplaces, setExpandedMarketplaces] = useState<ExpandedMarketplaces>(
+    defaultExpandedMarketplaces
+  );
 
   const listingByProduct = useMemo(
     () => new Map(listings.map((listing) => [listing.productId, listing])),
@@ -187,6 +199,20 @@ export default function MarketplacePage() {
   }, []);
 
   useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(marketplaceVisibilityStorageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<ExpandedMarketplaces>;
+        setExpandedMarketplaces({
+          site: parsed.site === true,
+          subito: parsed.subito === true,
+          ebay: parsed.ebay === true
+        });
+      }
+    } catch {
+      // Se lo storage non è disponibile, i marketplace restano chiusi per impostazione predefinita.
+    }
+
     const params = new URLSearchParams(window.location.search);
     const oauthResult = params.get("ebay");
     const oauthMessage = params.get("message");
@@ -201,6 +227,21 @@ export default function MarketplacePage() {
       }
     });
   }, [load]);
+
+  function toggleMarketplace(marketplace: MarketplaceKey) {
+    setExpandedMarketplaces((current) => {
+      const next = {
+        ...current,
+        [marketplace]: !current[marketplace]
+      };
+      try {
+        window.localStorage.setItem(marketplaceVisibilityStorageKey, JSON.stringify(next));
+      } catch {
+        // Il comando continua a funzionare per la sessione corrente anche senza storage.
+      }
+      return next;
+    });
+  }
 
   async function connect() {
     setBusy("connect");
@@ -390,7 +431,7 @@ export default function MarketplacePage() {
             Gestisci eBay via API e prepara gli annunci Subito dal catalogo Vitale.
           </p>
         </div>
-        {status?.connected ? (
+        {status?.connected && expandedMarketplaces.ebay ? (
           <button className="button button-outline" type="button" onClick={() => void disconnect()} disabled={busy !== null}>
             {busy === "disconnect" ? "Disconnessione…" : "Scollega eBay"}
           </button>
@@ -400,34 +441,67 @@ export default function MarketplacePage() {
       {error ? <div className="admin-alert error">{error}</div> : null}
       {notice ? <div className="admin-alert success">{notice}</div> : null}
 
-      <section className="admin-panel" aria-label="Canali di vendita">
-        <div className="channel-row">
+      <section className="admin-panel marketplace-channel-list" aria-label="Canali di vendita">
+        <div className={`channel-row ${expandedMarketplaces.site ? "is-expanded" : "is-collapsed"}`}>
           <span className="status-dot online" aria-hidden="true" />
           <strong>Sito Vitale</strong>
-          <span>I prodotti marcati “Pubblicato” sono visibili nella vetrina.</span>
+          {expandedMarketplaces.site ? (
+            <span className="channel-description">I prodotti marcati “Pubblicato” sono visibili nella vetrina.</span>
+          ) : <span className="channel-description" aria-hidden="true" />}
           <b>ATTIVO</b>
+          <button
+            className="marketplace-toggle"
+            type="button"
+            aria-expanded={expandedMarketplaces.site}
+            aria-label={`${expandedMarketplaces.site ? "Nascondi" : "Mostra"} Sito Vitale`}
+            onClick={() => toggleMarketplace("site")}
+          >
+            {expandedMarketplaces.site ? "Nascondi" : "Mostra"}
+          </button>
         </div>
-        <div className="channel-row">
+        <div className={`channel-row ${expandedMarketplaces.subito ? "is-expanded" : "is-collapsed"}`}>
           <span className={`status-dot ${subitoStatus?.databaseReady && subitoStatus.adapterAvailable ? "assisted" : ""}`} aria-hidden="true" />
           <strong>Subito.it</strong>
-          <span>Generazione annuncio, copia contenuti, foto ZIP e tracciamento manuale.</span>
+          {expandedMarketplaces.subito ? (
+            <span className="channel-description">Generazione annuncio, copia contenuti, foto ZIP e tracciamento manuale.</span>
+          ) : <span className="channel-description" aria-hidden="true" />}
           <b>{subitoStatus?.databaseReady && subitoStatus.adapterAvailable ? "ASSISTITO" : "DA CONFIGURARE"}</b>
+          <button
+            className="marketplace-toggle"
+            type="button"
+            aria-expanded={expandedMarketplaces.subito}
+            aria-label={`${expandedMarketplaces.subito ? "Nascondi" : "Mostra"} Subito.it`}
+            onClick={() => toggleMarketplace("subito")}
+          >
+            {expandedMarketplaces.subito ? "Nascondi" : "Mostra"}
+          </button>
         </div>
-        <div className="channel-row">
+        <div className={`channel-row ${expandedMarketplaces.ebay ? "is-expanded" : "is-collapsed"}`}>
           <span className={`status-dot ${status?.connected ? "online" : ""}`} aria-hidden="true" />
           <strong>eBay</strong>
-          <span>
-            {loading
-              ? "Verifica collegamento…"
-              : status?.connected
-                ? `Account collegato in ambiente ${status.environment.toUpperCase()}.`
-                : "Account venditore non ancora collegato."}
-          </span>
+          {expandedMarketplaces.ebay ? (
+            <span className="channel-description">
+              {loading
+                ? "Verifica collegamento…"
+                : status?.connected
+                  ? `Account collegato in ambiente ${status.environment.toUpperCase()}.`
+                  : "Account venditore non ancora collegato."}
+            </span>
+          ) : <span className="channel-description" aria-hidden="true" />}
           <b>{status?.connected ? "COLLEGATO" : "NON COLLEGATO"}</b>
+          <button
+            className="marketplace-toggle"
+            type="button"
+            aria-expanded={expandedMarketplaces.ebay}
+            aria-label={`${expandedMarketplaces.ebay ? "Nascondi" : "Mostra"} eBay`}
+            onClick={() => toggleMarketplace("ebay")}
+          >
+            {expandedMarketplaces.ebay ? "Nascondi" : "Mostra"}
+          </button>
         </div>
       </section>
 
-      {!loading && subitoStatus ? (
+      {expandedMarketplaces.subito && !loading && subitoStatus ? (
         <section className="admin-panel subito-panel">
           <div className="editor-head subito-head">
             <div>
@@ -551,7 +625,7 @@ export default function MarketplacePage() {
         </section>
       ) : null}
 
-      {!loading && status && !status.connected ? (
+      {expandedMarketplaces.ebay && !loading && status && !status.connected ? (
         <section className="admin-panel ebay-onboarding">
           <div>
             <div className="eyebrow">CONFIGURAZIONE</div>
@@ -582,7 +656,7 @@ export default function MarketplacePage() {
         </section>
       ) : null}
 
-      {status?.connected && resources ? (
+      {expandedMarketplaces.ebay && status?.connected && resources ? (
         <>
           <section className="admin-panel ebay-settings">
             <div className="editor-head">
