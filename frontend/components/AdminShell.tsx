@@ -129,7 +129,7 @@ export function AdminShell({
         </nav>
 
         <div className="admin-version">
-          V5.2 · Marketplace ordinato
+          V5.3 · Catalogo live
         </div>
 
         <button
