@@ -242,3 +242,10 @@ Interfaccia, record prodotto e storico delle pubblicazioni non dovranno essere m
 - Le aree operative Subito.it ed eBay possono essere chiuse separatamente per mantenere ordinata la pagina.
 - Lo stato scelto viene conservato nel browser e ripristinato agli accessi successivi.
 - Al primo accesso i marketplace sono chiusi; stato e comandi principali restano sempre visibili.
+
+## V5.3 — Catalogo live e filtri completi
+
+- Il catalogo pubblico aggiorna i prodotti direttamente dal backend dopo il caricamento della pagina, anche quando Render deve riattivarsi.
+- In produzione non vengono più mostrati i cinque prodotti dimostrativi quando l'API è temporaneamente lenta.
+- La cache del catalogo server è ridotta da cinque minuti a un minuto.
+- I filtri riconoscono Reefer/Refrigerato/Frigorifero, Open Top, Uso ufficio/Allestito e High Cube Pallet Wide anche nelle denominazioni precedenti.

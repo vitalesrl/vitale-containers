@@ -4,8 +4,9 @@ import type { AdminStats, Product } from "./types";
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:4001";
 
-const PUBLIC_FETCH_TIMEOUT_MS = 3000;
-const PUBLIC_REVALIDATE_SECONDS = 300;
+const PUBLIC_FETCH_TIMEOUT_MS = 10000;
+const PUBLIC_REVALIDATE_SECONDS = 60;
+const USE_DEMO_FALLBACK = process.env.NODE_ENV !== "production";
 
 async function publicApiFetch<T>(path: string): Promise<T | null> {
   const controller = new AbortController();
@@ -47,10 +48,8 @@ async function liveApiFetch<T>(path: string): Promise<T | null> {
 }
 
 export async function getProducts(): Promise<Product[]> {
-  return (
-    (await publicApiFetch<Product[]>("/api/products")) ??
-    demoProducts
-  );
+  const products = await publicApiFetch<Product[]>("/api/products");
+  return products ?? (USE_DEMO_FALLBACK ? demoProducts : []);
 }
 
 export async function getProduct(
@@ -62,7 +61,7 @@ export async function getProduct(
 
   return (
     product ??
-    demoProducts.find((item) => item.slug === slug) ??
+    (USE_DEMO_FALLBACK ? demoProducts.find((item) => item.slug === slug) : null) ??
     null
   );
 }
