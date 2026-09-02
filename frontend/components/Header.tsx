@@ -11,6 +11,7 @@ export function Header() {
         <Link href="/container">Container</Link>
         <a href="/#caratteristiche">Caratteristiche</a>
         <a href="/#trasporto">Trasporto</a>
+        <a href="/#faq">FAQ</a>
         <a href="/#contatti">Contatti</a>
         <Link className="admin-link" href="/admin">Area gestionale</Link>
       </nav>

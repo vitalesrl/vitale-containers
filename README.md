@@ -249,3 +249,11 @@ Interfaccia, record prodotto e storico delle pubblicazioni non dovranno essere m
 - In produzione non vengono più mostrati i cinque prodotti dimostrativi quando l'API è temporaneamente lenta.
 - La cache del catalogo server è ridotta da cinque minuti a un minuto.
 - I filtri riconoscono Reefer/Refrigerato/Frigorifero, Open Top, Uso ufficio/Allestito e High Cube Pallet Wide anche nelle denominazioni precedenti.
+
+## V5.4 — Domande frequenti nel frontend
+
+- La home include una sezione FAQ responsive con otto domande sui container marittimi.
+- Le risposte trattano tipologie, dimensioni, condizioni dell'usato, consegna, trasporto e autorizzazioni.
+- Le domande sono accessibili da tastiera e utilizzabili senza JavaScript.
+- Il menu principale include il collegamento diretto alla sezione FAQ.
+- I dati strutturati `FAQPage` rispecchiano i contenuti visibili della pagina.
