@@ -39,6 +39,62 @@ const useCases = [
   }
 ];
 
+const faqs = [
+  {
+    question: "Quali tipologie di container sono disponibili?",
+    answer:
+      "La disponibilità può includere container 20' e 40' Dry Van/General Purpose, 40' High Cube, 45' High Cube Pallet Wide, Reefer refrigerati e soluzioni allestite uso ufficio. Le unità effettivamente disponibili vengono confermate al momento della richiesta."
+  },
+  {
+    question: "Qual è la differenza tra un container standard e un High Cube?",
+    answer:
+      "Il container High Cube offre una maggiore altezza: circa 2,90 m esterni rispetto ai 2,59 m di un modello standard. È indicato quando serve più volume interno, tenendo conto degli spazi di accesso e posizionamento."
+  },
+  {
+    question: "Un container marittimo può essere usato come deposito o magazzino?",
+    answer:
+      "Sì. La struttura in acciaio Corten, le porte a due ante e il pavimento resistente rendono il container una soluzione pratica per custodire merci, materiali e attrezzature. La tipologia più adatta dipende dal contenuto e dall'uso previsto."
+  },
+  {
+    question: "In quali condizioni vengono venduti i container usati?",
+    answer:
+      "I container vengono proposti con fotografie e informazioni sulle condizioni disponibili per la singola unità. Prima dell'acquisto confermiamo disponibilità, caratteristiche e stato del container scelto."
+  },
+  {
+    question: "È disponibile la consegna del container?",
+    answer:
+      "Sì. È possibile ritirare il container a Salerno oppure richiedere l'organizzazione del trasporto verso la destinazione indicata, in tutta Italia."
+  },
+  {
+    question: "Il costo del trasporto è incluso nel prezzo?",
+    answer:
+      "Il trasporto viene normalmente calcolato separatamente. Il preventivo dipende dalla destinazione, dalla tipologia di container e dalle condizioni necessarie per scarico e posizionamento."
+  },
+  {
+    question: "Come scelgo la misura più adatta?",
+    answer:
+      "La scelta dipende dallo spazio disponibile, dal volume da contenere, dagli accessi al sito e dall'impiego previsto. Indicando questi elementi nella richiesta, possiamo aiutarti a confrontare le soluzioni disponibili."
+  },
+  {
+    question: "Servono autorizzazioni per posizionare un container?",
+    answer:
+      "Le eventuali autorizzazioni dipendono dal luogo, dalla durata e dall'uso previsto. Prima del posizionamento è opportuno verificare i requisiti con il Comune competente o con un tecnico abilitato."
+  }
+];
+
+const faqStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.answer
+    }
+  }))
+};
+
 export default async function HomePage() {
   const products = await getProducts();
 
@@ -147,6 +203,33 @@ export default async function HomePage() {
         <QuoteRequestButton className="button button-light" />
       </section>
 
+      <section className={styles.faqSection} id="faq">
+        <div className={styles.faqIntro}>
+          <div className={styles.eyebrow}>DOMANDE FREQUENTI</div>
+          <h2>Tutto quello che serve sapere prima di scegliere.</h2>
+          <p>
+            Misure, condizioni, trasporto e posizionamento: qui trovi le
+            risposte alle domande più comuni sui container marittimi.
+          </p>
+          <a href="#contatti" className={styles.faqLink}>
+            Hai un&apos;altra domanda? Contattaci <span>→</span>
+          </a>
+        </div>
+
+        <div className={styles.faqList}>
+          {faqs.map((item, index) => (
+            <details className={styles.faqItem} key={item.question}>
+              <summary>
+                <span className={styles.faqNumber}>{String(index + 1).padStart(2, "0")}</span>
+                <span>{item.question}</span>
+                <span className={styles.faqIcon} aria-hidden="true" />
+              </summary>
+              <p>{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <section className="contact-section" id="contatti">
         <div className="contact-title">
           <div className="eyebrow">CONTATTI</div>
@@ -173,6 +256,11 @@ export default async function HomePage() {
         <div><strong>VITALE S.R.L.</strong><span>Logistica · Trasporti · Spedizioni</span></div>
         <span>Vendita container marittimi · Salerno</span>
       </footer>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
     </main>
   );
 }
